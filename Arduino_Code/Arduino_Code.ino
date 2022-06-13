@@ -7,6 +7,12 @@ ADF4351  vfo(PIN_CS, SPI_MODE0, 1000000UL , MSBFIRST) ;
 
 String incomingInfo = "";
 
+String operation = "";
+double measureTime = 0;
+double stopTime = 0;
+int powerFreq = 0;
+int lskDemodFreq = 0;
+
 void setup() {
   
   Serial.begin(9600) ;
@@ -61,15 +67,48 @@ void loop()
 {
   while (Serial.available() > 0) {
     incomingInfo = Serial.readString();
-    if (incomingInfo.indexOf("SignalOff")> -1){
+    JSONVar myObject = JSON.parse(incomingInfo);
+
+    operation = myObject["operation"];
+
+    if (operation == "change_power_frequency"){
+     freq = myObject["frequency"];
+     if ( vfo.setf(freq) == 0 ) {
+      Serial.print("setf() success freq:") ;
+      Serial.println(vfo.cfreq) ;
+     } 
+     else {
+      Serial.println("setf() error") ;
+     }
+    }
+    else if (operation == "change_mixer_frequency"){
+     freq = myObject["frequency"];
+     if ( vfo.setf(freq) == 0 ) {
+      Serial.print("setf() success freq:") ;
+      Serial.println(vfo.cfreq) ;
+     } 
+     else {
+      Serial.println("setf() error") ;
+     }
+    }
+    else if (operation == "stop_power"){
+      stopTime = myObject["stop_time"];
       vfo.disable() ;
-      incomingInfo = "";
+      delay(stopTime);
+      
     }
-    
-    if (incomingInfo.indexOf("SignalOn")> -1){
+    else if (operation == "start_measurement"){
+      measureTime = myObject["measure_time"];
       vfo.enable() ;
-      incomingInfo = "";
+      delay(measureTime);
     }
+//    if (incomingInfo.indexOf("SignalOff")> -1){
+//      int ind1 = incomingInfor.indexOf("SignalOff:");
+//      vfo.disable() ;
+//    }
+//    else if (incomingInfo.indexOf("SignalOn")> -1){
+//      vfo.enable() ;
+//    }
     incomingInfo = "";
   }
 }

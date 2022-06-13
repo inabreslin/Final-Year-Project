@@ -5,6 +5,7 @@
 
 #include <SPI.h>
 #include <Ethernet.h>
+#include <Arduino_JSON.h>
 
 byte mac[] = {
   0xA8, 0x61, 0x0A, 0xAE, 0xAB, 0x54
@@ -20,7 +21,11 @@ EthernetServer server(80);
 
 String readString;
 String prevReadString;
+String jsonData;
 
+String offTime;
+String onTime;
+String freq;
 
 void setup() {
   // disable SPI for the SD
@@ -65,7 +70,7 @@ void loop() {
     while (client.connected()) {
       if (client.available()) {
         char c = client.read();
-      //  Serial.write(c);
+        //Serial.write(c);
         if (readString.length() < 100) {
           //store characters to string
           readString += c;
@@ -105,14 +110,38 @@ void loop() {
         }
       }
       if (readString != prevReadString){
-        if (readString.indexOf("SignalOff") > 0){
-          Serial.println("SignalOff");
-          readString = "";
+        int ind1 = readString.indexOf('{');
+        int ind2 = readString.indexOf('}');
+        jsonData = "{" + readString.substring(ind1, ind2) + "}";
+
+        if (readString.indexOf("ChangePowerFreq") > -1){
+          int ind1 = readString.indexOf("ChangePowerFreq:");
+          int ind2 = readString.indexOf(";", ind1);
+          freq = readString.substring(ind1+16, ind2);
+          jsonData = "{\"change_power_frequency\":\"" + freq + "\"}";
         }
-        if (readString.indexOf("SignalOn") > 0){
-          Serial.println("SignalOn");
-          readString = "";
+        else if (readString.indexOf("ChangeMixerFreq") > -1){
+          int ind1 = readString.indexOf("ChangeMixerFreq:");
+          int ind2 = readString.indexOf(";", ind1);
+          freq = readString.substring(ind1+16, ind2);
+          jsonData = "{\"change_mixer_frequency\":\"" + freq + "\"}";
         }
+        else if (readString.indexOf("SignalOff") > -1){
+          int ind1 = readString.indexOf("SignalOff:");
+          int ind2 = readString.indexOf(";", ind1);
+          offTime = readString.substring(ind1+10, ind2);
+          jsonData = "{\"stop_power\":\"" + offTime + "\"}";
+        }
+        else if (readString.indexOf("SignalOn") > -1){
+          int ind1 = readString.indexOf("SignalOn:");
+          int ind2 = readString.indexOf(";", ind1);
+          onTime = readString.substring(ind1+9, ind2);
+          jsonData = "{\"start_measurement\":\"" + onTime + "\"}";
+        }
+        if (jsonData != "{}"){
+          Serial.println(jsonData);
+        }
+//        Serial.println(readString);
         prevReadString = readString;
       }
     }
@@ -123,4 +152,8 @@ void loop() {
     Serial.println("client disconnected");
     readString="";  
   }
+}
+
+void parseInfo (){
+
 }
