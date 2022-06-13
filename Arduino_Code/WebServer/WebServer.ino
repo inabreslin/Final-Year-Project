@@ -1,12 +1,5 @@
 /*
-  Web Server Example code adapted from original by 
-
- created 18 Dec 2009
- by David A. Mellis
- modified 9 Apr 2012
- by Tom Igoe
- modified 02 Sept 2015
- by Arturo Guadalupi
+  Based off Web Server Example code by David A. Mellis,  Tom Igoe and  Arturo Guadalupi
  
  */
 
@@ -16,16 +9,26 @@
 byte mac[] = {
   0xA8, 0x61, 0x0A, 0xAE, 0xAB, 0x54
 };
-IPAddress ip(192, 168, 1, 177);
+IPAddress ip(192, 168, 1, 42);
+byte subnet[] = { 255,255,255,0};
+byte gateway[] = { 192,168,1,254};
 
 // Initialize the Ethernet server library
 // with the IP address and port you want to use
 // (port 80 is default for HTTP):
 EthernetServer server(80);
 
+String readString;
+String prevReadString;
+
+
 void setup() {
+  // disable SPI for the SD
+  pinMode(4,OUTPUT);
+  digitalWrite(4,HIGH);
+  
   // You can use Ethernet.init(pin) to configure the CS pin
-  Ethernet.init(10);  // Most Arduino shields
+  Ethernet.init(10);
 
   // Open serial communications and wait for port to open:
   Serial.begin(9600);
@@ -35,14 +38,11 @@ void setup() {
   Serial.println("Ethernet WebServer Example");
 
   // start the Ethernet connection and the server:
-  Ethernet.begin(mac, ip);
+  Ethernet.begin(mac);
 
   // Check for Ethernet hardware present
   if (Ethernet.hardwareStatus() == EthernetNoHardware) {
     Serial.println("Ethernet shield was not found.  Sorry, can't run without hardware. :(");
-    while (true) {
-      delay(1); // do nothing, no point running without Ethernet hardware
-    }
   }
   if (Ethernet.linkStatus() == LinkOFF) {
     Serial.println("Ethernet cable is not connected.");
@@ -65,9 +65,10 @@ void loop() {
     while (client.connected()) {
       if (client.available()) {
         char c = client.read();
-        Serial.write(c);
-        if (c == 'SignalOff'){
-          Serial.print("TURNING OF SIGNAL");
+      //  Serial.write(c);
+        if (readString.length() < 100) {
+          //store characters to string
+          readString += c;
         }
         // if you've gotten to the end of the line (received a newline
         // character) and the line is blank, the http request has ended,
@@ -90,6 +91,8 @@ void loop() {
             client.print(sensorReading);
             client.println("<br />");
           }
+          client.println("<a href=\"/SignalOn\"\"><button>Turn on signal</button></a>");
+          client.println("<a href=\"/SignalOff\"\"><button>Turn off signal</button></a>");
           client.println("</html>");
           break;
         }
@@ -101,11 +104,23 @@ void loop() {
           currentLineIsBlank = false;
         }
       }
+      if (readString != prevReadString){
+        if (readString.indexOf("SignalOff") > 0){
+          Serial.println("SignalOff");
+          readString = "";
+        }
+        if (readString.indexOf("SignalOn") > 0){
+          Serial.println("SignalOn");
+          readString = "";
+        }
+        prevReadString = readString;
+      }
     }
     // give the web browser time to receive the data
     delay(1);
     // close the connection:
     client.stop();
     Serial.println("client disconnected");
+    readString="";  
   }
 }

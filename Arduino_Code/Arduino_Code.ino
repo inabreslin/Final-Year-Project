@@ -5,8 +5,10 @@
 
 ADF4351  vfo(PIN_CS, SPI_MODE0, 1000000UL , MSBFIRST) ;
 
+String incomingInfo = "";
+
 void setup() {
-  // put your setup code here, to run once:
+  
   Serial.begin(9600) ;
   Wire.begin() ;
 
@@ -52,63 +54,22 @@ void setup() {
   */
   Serial.println("Enable chip") ;
   vfo.enable() ;
-  
+  incomingInfo = "";
 }
 
 void loop()
 {
-
-//  /*!
-//     change the step value to 100kHz
-//     do a set of 5 channel steps change every 5 seconds
-//     1,000.100 Mhz
-//     1,000.200 Mhz
-//     ...
-//     1,000.500 Mhz
-//
-//     print out the PLL values
-//
-//  */
-//  unsigned long newf ;
-//  vfo.ChanStep = steps[4] ; ///< change to 100 kHz
-//
-//  for (int i = 0; i < 5; i++) {
-//    delay(5000);
-//    newf = vfo.cfreq + vfo.ChanStep ;
-//
-//    if ( vfo.setf(newf) == 0 ) {
-//      Serial.print("setf() success freq:") ;
-//      Serial.println(vfo.cfreq) ;
-//    } else {
-//      Serial.println("setf() error") ;
-//    }
-//
-//    Serial.println(vfo.cfreq) ;
-//    Serial.print("PLL INT:");
-//    Serial.println(vfo.N_Int);
-//    Serial.print("PLL FRAC:");
-//    Serial.println(vfo.Frac);
-//    Serial.print("PLL MOD:");
-//    Serial.println(vfo.Mod);
-//    Serial.print("PLL PFD:");
-//    Serial.println(vfo.PFDFreq);
-//    Serial.print("PLL output divider:");
-//    Serial.println(vfo.outdiv);
-//    Serial.print("PLL prescaler:");
-//    Serial.println(vfo.Prescaler);
-//    Serial.println("");
-//  }
-
-  /*!
-     disable the output for 5 seconds
-     and then enable it.
-  */
-  delay(10000);
-  Serial.println("disable");
-  vfo.disable() ;
-  delay(5000);
-  Serial.println("enable");
-  vfo.enable() ;
-
-  delay(5000) ;
+  while (Serial.available() > 0) {
+    incomingInfo = Serial.readString();
+    if (incomingInfo.indexOf("SignalOff")> -1){
+      vfo.disable() ;
+      incomingInfo = "";
+    }
+    
+    if (incomingInfo.indexOf("SignalOn")> -1){
+      vfo.enable() ;
+      incomingInfo = "";
+    }
+    incomingInfo = "";
+  }
 }
