@@ -1,5 +1,7 @@
 #include <Arduino.h>
 #include "adf4351.h"
+#include "BigNumber.h"
+#include <Arduino_JSON.h>
 
 #define PIN_CS 9  ///< SPI chip select pin
 
@@ -10,8 +12,9 @@ String incomingInfo = "";
 String operation = "";
 double measureTime = 0;
 double stopTime = 0;
-int powerFreq = 0;
-int lskDemodFreq = 0;
+double powerFreq = 0;
+double lskDemodFreq = 0;
+double freq = 0;
 
 void setup() {
   
@@ -68,11 +71,11 @@ void loop()
   while (Serial.available() > 0) {
     incomingInfo = Serial.readString();
     JSONVar myObject = JSON.parse(incomingInfo);
-
     operation = myObject["operation"];
 
     if (operation == "change_power_frequency"){
      freq = myObject["frequency"];
+     Serial.println(freq);
      if ( vfo.setf(freq) == 0 ) {
       Serial.print("setf() success freq:") ;
       Serial.println(vfo.cfreq) ;
@@ -83,6 +86,7 @@ void loop()
     }
     else if (operation == "change_mixer_frequency"){
      freq = myObject["frequency"];
+     Serial.println(freq);
      if ( vfo.setf(freq) == 0 ) {
       Serial.print("setf() success freq:") ;
       Serial.println(vfo.cfreq) ;
@@ -93,12 +97,14 @@ void loop()
     }
     else if (operation == "stop_power"){
       stopTime = myObject["stop_time"];
+      Serial.println(stopTime);
       vfo.disable() ;
       delay(stopTime);
       
     }
     else if (operation == "start_measurement"){
       measureTime = myObject["measure_time"];
+      Serial.println(measureTime);
       vfo.enable() ;
       delay(measureTime);
     }

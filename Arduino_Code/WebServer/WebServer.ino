@@ -96,8 +96,8 @@ void loop() {
             client.print(sensorReading);
             client.println("<br />");
           }
-          client.println("<a href=\"/SignalOn\"\"><button>Turn on signal</button></a>");
-          client.println("<a href=\"/SignalOff\"\"><button>Turn off signal</button></a>");
+          client.println("<a href=\"/SignalOn:5000;\"\"><button>Turn on signal</button></a>");
+          client.println("<a href=\"/SignalOff:5000;\"\"><button>Turn off signal</button></a>");
           client.println("</html>");
           break;
         }
@@ -109,44 +109,44 @@ void loop() {
           currentLineIsBlank = false;
         }
       }
-      if (readString != prevReadString){
-        int ind1 = readString.indexOf('{');
-        int ind2 = readString.indexOf('}');
-        jsonData = "{" + readString.substring(ind1, ind2) + "}";
-
-        if (readString.indexOf("ChangePowerFreq") > -1){
-          int ind1 = readString.indexOf("ChangePowerFreq:");
-          int ind2 = readString.indexOf(";", ind1);
-          freq = readString.substring(ind1+16, ind2);
-          jsonData = "{\"change_power_frequency\":\"" + freq + "\"}";
-        }
-        else if (readString.indexOf("ChangeMixerFreq") > -1){
-          int ind1 = readString.indexOf("ChangeMixerFreq:");
-          int ind2 = readString.indexOf(";", ind1);
-          freq = readString.substring(ind1+16, ind2);
-          jsonData = "{\"change_mixer_frequency\":\"" + freq + "\"}";
-        }
-        else if (readString.indexOf("SignalOff") > -1){
-          int ind1 = readString.indexOf("SignalOff:");
-          int ind2 = readString.indexOf(";", ind1);
-          offTime = readString.substring(ind1+10, ind2);
-          jsonData = "{\"stop_power\":\"" + offTime + "\"}";
-        }
-        else if (readString.indexOf("SignalOn") > -1){
-          int ind1 = readString.indexOf("SignalOn:");
-          int ind2 = readString.indexOf(";", ind1);
-          onTime = readString.substring(ind1+9, ind2);
-          jsonData = "{\"start_measurement\":\"" + onTime + "\"}";
-        }
-        if (jsonData != "{}"){
-          Serial.println(jsonData);
-        }
-//        Serial.println(readString);
-        prevReadString = readString;
-      }
     }
     // give the web browser time to receive the data
     delay(1);
+//    Serial.println(readString);
+    if (readString != prevReadString){
+      int ind1 = readString.indexOf('{');
+      int ind2 = readString.indexOf('}');
+      jsonData = readString.substring(ind1, ind2+1);
+      if (readString.indexOf("ChangePowerFreq") > -1){
+        int ind1 = readString.indexOf("ChangePowerFreq:");
+        int ind2 = readString.indexOf(";", ind1);
+        freq = readString.substring(ind1+16, ind2);
+        jsonData = "{\"operation\":\"change_power_frequency\", \"frequency\" :\"" + freq + "\"}";
+      }
+      else if (readString.indexOf("ChangeMixerFreq") > -1){
+        int ind1 = readString.indexOf("ChangeMixerFreq:");
+        int ind2 = readString.indexOf(";", ind1);
+        freq = readString.substring(ind1+16, ind2);
+        jsonData = "{\"operation\":\"change_mixer_frequency\", \"frequency\" :\"" + freq + "\"}";
+      }
+      else if (readString.indexOf("SignalOff") > -1){
+        int ind1 = readString.indexOf("SignalOff:");
+        int ind2 = readString.indexOf(";", ind1);
+        offTime = readString.substring(ind1+10, ind2);
+        jsonData = "{\"operation\":\"stop_power\",\"stop_time\" :\"" + offTime + "\"}";
+      }
+      else if (readString.indexOf("SignalOn") > -1){
+        int ind1 = readString.indexOf("SignalOn:");
+        int ind2 = readString.indexOf(";", ind1);
+        onTime = readString.substring(ind1+9, ind2);
+        jsonData = "{\"operation\":\"start_measurement\",\"measure_time\" :\"" + onTime + "\"}";
+      }
+      if (jsonData != "{}"){
+        Serial.println(jsonData);
+      }
+      prevReadString = readString;
+      readString = "";
+    }
     // close the connection:
     client.stop();
     Serial.println("client disconnected");
