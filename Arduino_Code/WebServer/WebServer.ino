@@ -64,7 +64,7 @@ void loop() {
   // listen for incoming clients
   EthernetClient client = server.available();
   if (client) {
-    Serial.println("new client");
+//    Serial.println("new client");
     // an http request ends with a blank line
     boolean currentLineIsBlank = true;
     while (client.connected()) {
@@ -143,13 +143,14 @@ void loop() {
       }
       if (jsonData != "{}"){
         Serial.println(jsonData);
+        jsonData = "";
       }
       prevReadString = readString;
       readString = "";
     }
     // close the connection:
     client.stop();
-    Serial.println("client disconnected");
+//    Serial.println("client disconnected");
     readString="";  
   }
 }

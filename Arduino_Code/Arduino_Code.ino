@@ -72,6 +72,7 @@ void loop()
     incomingInfo = Serial.readString();
     JSONVar myObject = JSON.parse(incomingInfo);
     operation = myObject["operation"];
+//    Serial.println(operation);
 
     if (operation == "change_power_frequency"){
      freq = myObject["frequency"];
@@ -100,6 +101,7 @@ void loop()
       Serial.println(stopTime);
       vfo.disable() ;
       delay(stopTime);
+      vfo.enable() ;
       
     }
     else if (operation == "start_measurement"){
